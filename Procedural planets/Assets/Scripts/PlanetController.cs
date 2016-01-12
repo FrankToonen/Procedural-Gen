@@ -31,7 +31,7 @@ public class PlanetController : MonoBehaviour
 		}
 		PlanetGenerator generator = new PlanetGenerator ();
 		planets = generator.GeneratePlanets (startMesh, amountOfPlanets, radius, noiseIntensity, noiseSmoothing, LOD);
-		planets [0].Initialize (Vector3.zero, 20);
+		planets [0].Initialize (Vector3.zero, 20, 0);
 		for (int i = 1; i < planets.Count; i++) {
 			Planet p = planets [i];
 
@@ -39,7 +39,7 @@ public class PlanetController : MonoBehaviour
 			Vector3 direction = (planets [0].transform.position - p.transform.position).normalized;
 			Vector3 velocity = Quaternion.AngleAxis (90, Vector3.up) * direction /** speed*/;
 
-			planets [i].Initialize (velocity, Random.Range (1, 5));
+			planets [i].Initialize (velocity, Random.Range (1, 5), i);
 		}
 	}
 

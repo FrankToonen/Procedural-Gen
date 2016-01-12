@@ -10,7 +10,7 @@ public class TileGenerator : MonoBehaviour
 
 	public GameObject display, meshHolder;
 	Texture2D map;
-	List<Vector3> positions;
+	List<VertexInfo> vertexInfos;
 
 	void Start ()
 	{
@@ -28,7 +28,7 @@ public class TileGenerator : MonoBehaviour
 
 	void GenerateGrid ()
 	{
-		positions = new List<Vector3> ();
+		vertexInfos = new List<VertexInfo> ();
 		map = new Texture2D (width, height);
 		float m = Random.Range (0, 10000);
 
@@ -36,13 +36,28 @@ public class TileGenerator : MonoBehaviour
 			for (int z = 0; z < height; z++) {
 
 				float noise = Mathf.PerlinNoise ((x + m) / width / noiseSmoothing, (z + m) / height / noiseSmoothing);
-				float r = 0;
-				float g = noise >= 0.3f ? noise : 0;
-				float b = noise < 0.3f ? noise / .3f : 0;
+				float r = 0, g = 0, b = 0;
+
+				if (noise < 0.3f) {
+					//b = noise / .3f;
+					b = 1;
+				} else if (noise < 0.4f) {
+					//r = (noise - .3f) / .1f;
+					//g = (noise - .3f) / .1f;
+					//b = (noise - .3f) / .1f / 2;
+					r = 1;
+					g = 1;
+					b = 0.5f;
+				} else {
+					//g = (noise - .4f) / .6f;
+					g = 1;
+				}
 
 				Color pixelColor = new Color (r, g, b);
 				map.SetPixel (x, z, pixelColor);
-				positions.Add (new Vector3 (x * (meshWidth / width), noise * noiseIntensity, z * (meshHeight / height)));
+			
+				Vector3 position = new Vector3 (x * (meshWidth / width), noise * noiseIntensity, z * (meshHeight / height));
+				vertexInfos.Add (new VertexInfo (position, pixelColor));
 			}
 		}
 		map.Apply ();
@@ -51,11 +66,12 @@ public class TileGenerator : MonoBehaviour
 
 	void CreateMesh ()
 	{
-		Vector3[] vertices = new Vector3[positions.Count];
-		Color[] colors = new Color[positions.Count];
+		Vector3[] vertices = new Vector3[vertexInfos.Count];
+		Color[] colors = new Color[vertexInfos.Count];
 		for (int i = 0; i < vertices.Length; i++) {
-			vertices [i] = positions [i];
-			colors [i] = vertices [i].y < 0.3f * noiseIntensity ? Color.blue : Color.green;
+			vertices [i] = vertexInfos [i].position;
+			//colors [i] = vertices [i].y < 0.3f * noiseIntensity ? Color.blue : Color.green;
+			colors [i] = vertexInfos [i].color;
 		}
 		JitterVertices (ref vertices);
 
@@ -114,5 +130,17 @@ public class TileGenerator : MonoBehaviour
 	bool IsBoundary (int i)
 	{
 		return (i % height == width - 1) || (i % height == 0) || (i < width) || (i > (width - 1) * height);
+	}
+
+	public class VertexInfo
+	{
+		public Vector3 position;
+		public Color color;
+
+		public VertexInfo (Vector3 _position, Color _color)
+		{
+			position = _position;
+			color = _color;
+		}
 	}
 }
