@@ -4,7 +4,7 @@ using System.Collections;
 public class Part_Eye : CreaturePart
 {
 	public float sightDistance;
-	public float sightAngle = 90;
+	public float sightAngle = 360;
 	public int eyeSize = 100;
 	Color[,] eyeKernel;
 
@@ -30,7 +30,12 @@ public class Part_Eye : CreaturePart
 		int amountOfEyes = (int)(sightAngle / 45);
 		for (int i = 0; i < amountOfEyes; i++) {
 			
-			ApplyKernel (ref pixels2D, texture.width, texture.height, new Vector2 (Random.Range (0, texture.width), Random.Range (0, texture.height)));
+			int radius = (texture.width - eyeSize) / 2;
+			float xPos = Mathf.Sin (Mathf.Deg2Rad * (i * 45));
+			float yPos = Mathf.Cos (Mathf.Deg2Rad * (i * 45));
+			Vector2 pos = new Vector2 (xPos, yPos) * radius + new Vector2 (texture.width - eyeSize, texture.height - eyeSize) / 2;
+
+			ApplyKernel (ref pixels2D, texture.width, texture.height, pos);
 		}
 
 		for (int x = 0; x < pixels2D.GetLength (0); x++) {
@@ -49,11 +54,18 @@ public class Part_Eye : CreaturePart
 	void SetKernel ()
 	{
 		eyeKernel = new Color[eyeSize, eyeSize];
+
+		Vector2 center = new Vector2 (eyeSize / 2, eyeSize / 2);
 		for (int x = 0; x < eyeSize; x++) {
 			for (int y = 0; y < eyeSize; y++) {
-				
-				float c = (float)(x + y) / (2 * eyeSize);
-				eyeKernel [x, y] = new Color (c, c, c);
+
+				Vector2 pos = new Vector2 (x, y);
+				float distance = Vector2.Distance (center, pos);
+				float c = distance / (eyeSize / 2);
+				float a = 1 - c;
+
+				//float c = (float)(x + y) / (2 * eyeSize);
+				eyeKernel [x, y] = new Color (c, c, c, a);
 			}		
 		}
 	}
