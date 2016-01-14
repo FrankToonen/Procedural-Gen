@@ -1,17 +1,18 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Tile : MonoBehaviour
+public class Tile
 {
 	public int x, z;
 	public float y;
+	public Color color;
 
-	public void Initialize (int _x, float _y, int _z)
+	public Tile (int _x, float _y, int _z, Color _color)
 	{
 		x = _x;
 		y = _y;
 		z = _z;
 
-		GetComponent<MeshRenderer> ().material.color = new Color (0, y, 0);
+		color = _color;
 	}
 }

@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class TileGenerator : MonoBehaviour
+public class TileGeneratorOld : MonoBehaviour
 {
 	public int width = 25, height = 25;
 	public float noiseSmoothing = 1, noiseIntensity = 1;
