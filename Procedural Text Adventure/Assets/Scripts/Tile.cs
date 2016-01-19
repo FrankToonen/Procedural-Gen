@@ -3,16 +3,29 @@ using System.Collections;
 
 public class Tile
 {
-	public int x, z;
-	public float y;
-	public Color color;
+    public enum TileType
+    {
+        Grass,
+        Mountain,
+        Sand,
+        Water,
+        Village,
+        VillageBorder
+    }
 
-	public Tile (int _x, float _y, int _z, Color _color)
-	{
-		x = _x;
-		y = _y;
-		z = _z;
+    public TileType type;
+    public int x, z;
+    public float y;
+    public Color color;
 
-		color = _color;
-	}
+    public Tile(TileType _type, int _x, float _y, int _z, Color _color)
+    {
+        type = _type;
+        x = _x;
+        y = _y;
+        z = _z;
+
+        color = _color;
+
+    }
 }

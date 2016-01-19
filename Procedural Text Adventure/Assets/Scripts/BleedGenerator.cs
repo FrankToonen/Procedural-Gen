@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public static class BleedGenerator
 {
-	/*static BleedPointInfo GetBleedPoint (int width, int height)
+    /*static BleedPointInfo GetBleedPoint (int width, int height)
 	{
 		Vector2 newPoint = new Vector2 (Random.Range (0, width - 1), Random.Range (0, height - 1));
 		foreach (BleedPointInfo bpi in bleedPoints) {
@@ -16,89 +16,140 @@ public static class BleedGenerator
 		return new BleedPointInfo (newPoint, maxBleed);
 	}*/
 
-	public static Texture2D BleedPoints (Texture2D textureIn, List<Vector2> points, int maxBleed, Color tileColor, float bleedChance = 0.5f)
-	{
-		List<BleedPointInfo> bleedPoints = new List<BleedPointInfo> ();
-		foreach (Vector2 p in points) {
-			BleedPointInfo bpi = new BleedPointInfo (p, maxBleed);
-			bleedPoints.Add (bpi);
-		}
+    public static Tile[,] BleedPoints(Tile[,] grid, List<Vector3> points, int maxBleed, Color tileColor, float bleedChance = 0.5f)
+    {
+        BleedPointInfo[,] bleedGrid = new BleedPointInfo[grid.GetLength(0), grid.GetLength(0)];
+        foreach (Vector3 p in points)
+        {
+            BleedPointInfo bpi = new BleedPointInfo(p, maxBleed);
+            bleedGrid[(int)p.x, (int)p.z] = bpi;
+        }
+        BleedPointInfo[,] newBleedGrid = bleedGrid.Clone() as BleedPointInfo[,];
 
-		BleedPointInfo[,] grid = new BleedPointInfo[textureIn.width, textureIn.height];
-		foreach (BleedPointInfo bpi in bleedPoints) {
-			grid [(int)bpi.position.x, (int)bpi.position.y] = bpi;
-		}
+        // Bleed bleedpoints until everything stopped bleeding
+        bool isStillBleeding = true;
+        while (isStillBleeding)
+        {
+            bool isBleeding = false;
 
-		bool isStillBleeding = true;
-		while (isStillBleeding) {
-			bool isBleeding = false;
+            for (int x = 0; x < bleedGrid.GetLength(0); x++)
+            {
+                for (int y = 0; y < bleedGrid.GetLength(1); y++)
+                {
+                    BleedPointInfo bpi = bleedGrid[x, y];
+                    if (bpi != null && bpi.bloodLeft > 0)
+                    {
+                        if (x - 1 > 0 && Random.value < bleedChance)
+                        { // left
+                            if (newBleedGrid[x - 1, y] == null)
+                            {
+                                newBleedGrid[x - 1, y] = new BleedPointInfo(new Vector3(x - 1, bpi.position.y, y), bpi.bloodLeft - 1);
+                            }
+                        }
 
-			for (int x = 0; x < textureIn.width; x++) {
-				for (int y = 0; y < textureIn.height; y++) {
-					if (grid [x, y] != null && grid [x, y].bloodLeft > 0) {
-						if (x - 1 > 0 && Random.value < bleedChance) { // left
-							if (grid [x - 1, y] == null) {
-								grid [x - 1, y] = new BleedPointInfo (new Vector2 (x - 1, y), grid [x, y].bloodLeft - 1);
-							}
-						}
+                        if (x + 1 < bleedGrid.GetLength(0) && Random.value < bleedChance)
+                        { // right
+                            if (newBleedGrid[x + 1, y] == null)
+                            {
+                                newBleedGrid[x + 1, y] = new BleedPointInfo(new Vector3(x + 1, bpi.position.y, y), bpi.bloodLeft - 1);
+                            }
+                        }
 
-						if (x + 1 < textureIn.width && Random.value < bleedChance) { // right
-							if (grid [x + 1, y] == null) {
-								grid [x + 1, y] = new BleedPointInfo (new Vector2 (x + 1, y), grid [x, y].bloodLeft - 1);
-							}
-						}
+                        if (y - 1 > 0 && Random.value < bleedChance)
+                        { // up
+                            if (newBleedGrid[x, y - 1] == null)
+                            {
+                                newBleedGrid[x, y - 1] = new BleedPointInfo(new Vector3(x, bpi.position.y, y - 1), bpi.bloodLeft - 1);
+                            }
+                        }
 
-						if (y - 1 > 0 && Random.value < bleedChance) { // up
-							if (grid [x, y - 1] == null) {
-								grid [x, y - 1] = new BleedPointInfo (new Vector2 (x, y - 1), grid [x, y].bloodLeft - 1);
-							}
-						}
+                        if (y + 1 < bleedGrid.GetLength(1) && Random.value < bleedChance)
+                        { // down
+                            if (newBleedGrid[x, y + 1] == null)
+                            {
+                                newBleedGrid[x, y + 1] = new BleedPointInfo(new Vector3(x, bpi.position.y, y + 1), bpi.bloodLeft - 1);
+                            }
+                        }
 
-						if (y + 1 < textureIn.height && Random.value < bleedChance) { // down
-							if (grid [x, y + 1] == null) {
-								grid [x, y + 1] = new BleedPointInfo (new Vector2 (x, y + 1), grid [x, y].bloodLeft - 1);
-							}
-						}
+                        bpi.bloodLeft--;
+                        isBleeding = true;
+                    }
+                }
+            }
 
-						grid [x, y].bloodLeft--;
-						isBleeding = true;
-					}
-				}
-			}
+            bleedGrid = newBleedGrid.Clone() as BleedPointInfo[,];
 
-			isStillBleeding = isBleeding;
-		}
+            isStillBleeding = isBleeding;
+        }
 
-		for (int x = 0; x < textureIn.width; x++) {
-			for (int y = 0; y < textureIn.height; y++) {
-				BleedPointInfo bpi = grid [x, y];
-				Color pixelColor = textureIn.GetPixel (x, y);
-				if (bpi != null) {
-					float c = Mathf.Clamp01 ((float)(bpi.maxBlood + 1) / maxBleed + 0.5f);
+        // Convert BleedPoint grid to Tile grid
+        for (int x = 0; x < bleedGrid.GetLength(0); x++)
+        {
+            for (int y = 0; y < bleedGrid.GetLength(1); y++)
+            {
+                BleedPointInfo bpi = bleedGrid[x, y];
+                if (bpi != null)
+                {
+                    grid[x, y] = new Tile(Tile.TileType.Village, (int)bpi.position.x, grid[x, y].y, (int)bpi.position.z, tileColor);
+                }
+            }
+        }
 
-					Color newColor = tileColor * c;
-					newColor.a = 1;
-					pixelColor = newColor;
-				}
-				textureIn.SetPixel (x, y, pixelColor);
-			}
-		}
-		textureIn.Apply ();
+        // Mark village borders
+        for (int x = 0; x < bleedGrid.GetLength(0); x++)
+        {
+            for (int y = 0; y < bleedGrid.GetLength(1); y++)
+            {
+                Tile tile = grid[x, y];
+                if (tile.type == Tile.TileType.Village)
+                {
 
-		return textureIn;
-	}
+                    bool border = false;
 
-	public class BleedPointInfo
-	{
-		public Vector2 position;
-		public int bloodLeft;
-		public int maxBlood;
+                    for (int u = -1; u <= 1; u++)
+                    {
+                        for (int v = -1; v <= 1; v++)
+                        {
 
-		public BleedPointInfo (Vector2 _position, int max)
-		{
-			position = _position;
-			bloodLeft = max;
-			maxBlood = max;
-		}
-	}
+                            if ((u + v) % 2 == 0)
+                            {
+                                continue;
+                            }
+
+                            int xI = x + u;
+                            int yI = y + v;
+
+                            if (xI < 0 || xI >= grid.GetLength(0) || yI < 0 || yI >= grid.GetLength(1))
+                            {
+                                continue;
+                            }
+
+                            border = border || (grid[xI, yI].type != Tile.TileType.Village && grid[xI, yI].type != Tile.TileType.VillageBorder);    
+                        }
+                    }
+
+                    if (border)
+                    {
+                        tile.type = Tile.TileType.VillageBorder;
+                    }
+                }
+            }
+        }
+
+        return grid;
+    }
+
+    public class BleedPointInfo
+    {
+        public Vector3 position;
+        public int bloodLeft;
+        public int maxBlood;
+
+        public BleedPointInfo(Vector3 _position, int max)
+        {
+            position = _position;
+            bloodLeft = max;
+            maxBlood = max;
+        }
+    }
 }
