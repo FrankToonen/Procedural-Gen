@@ -31,7 +31,6 @@ public class MeshGenerator : TextureGenerator
         {
             for (int z = 0; z < height; z++)
             {
-
                 Tile tile = grid[x, z];
 
                 float yValue = tile.y < possibleYValues[2] ? possibleYValues[2] * noiseIntensity : tile.y * noiseIntensity;
@@ -57,6 +56,12 @@ public class MeshGenerator : TextureGenerator
                     instantiatedObjects.Add(newBorder);
                 }
                 else if (tile.type == Tile.TileType.Water && Random.value < boatChance)
+                {
+                    GameObject newBoat = Instantiate(Resources.Load<GameObject>("Prefabs/BoatPrefab"), vertexList[vertexList.Count - 1], Quaternion.identity) as GameObject;
+                    newBoat.transform.parent = display.transform;
+                    instantiatedObjects.Add(newBoat);
+                }
+                else if (tile.type == Tile.TileType.Road)
                 {
                     GameObject newBoat = Instantiate(Resources.Load<GameObject>("Prefabs/BoatPrefab"), vertexList[vertexList.Count - 1], Quaternion.identity) as GameObject;
                     newBoat.transform.parent = display.transform;

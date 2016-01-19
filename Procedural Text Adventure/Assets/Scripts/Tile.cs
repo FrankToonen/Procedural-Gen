@@ -10,7 +10,8 @@ public class Tile
         Sand,
         Water,
         Village,
-        VillageBorder
+        VillageBorder,
+        Road
     }
 
     public TileType type;

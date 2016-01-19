@@ -13,6 +13,7 @@ public class MapGenerator : MonoBehaviour
     public int villageCount = 5, villageSize = 5;
 
     protected float noiseOffset;
+    protected List<Vector3> villagePoints;
 
     protected virtual void Start()
     {
@@ -132,14 +133,14 @@ public class MapGenerator : MonoBehaviour
     void PopulateMap()
     {
         SetVillages();
-        // Meer???
+        CreateRoads();
     }
 
     void SetVillages()
     {
         int count = Random.Range(villageCount, villageCount * 2);
         int size = Random.Range(villageSize, villageSize * 2);
-        List<Vector3> villagePoints = new List<Vector3>();
+        villagePoints = new List<Vector3>();
 
         for (int i = 0; i < count; i++)
         {
@@ -147,6 +148,70 @@ public class MapGenerator : MonoBehaviour
         }
 
         grid = BleedGenerator.BleedPoints(grid, villagePoints, size, Color.gray);
+    }
+
+    void CreateRoads()
+    {
+        foreach (Vector3 v in villagePoints)
+        {
+            List<Vector3> sortedByDistance = new List<Vector3>();
+            for (int i = 0; i < villagePoints.Count; i++)
+            {
+                Vector3 nV = villagePoints[i];
+                bool added = false;
+                for (int j = 0; j < sortedByDistance.Count; j++)
+                {
+                    Vector3 oV = sortedByDistance[j];
+                    if (Vector3.Distance(nV, v) < Vector3.Distance(oV, v))
+                    {
+                        sortedByDistance.Insert(j, nV);
+                        added = true;
+                        break;
+                    }
+                }
+
+                if (!added)
+                {
+                    sortedByDistance.Add(nV);
+                }
+            }
+
+            for (int i = 0; i < 2; i++)
+            {         
+                float xDistance = v.x - sortedByDistance[i].x;
+                float zDistance = v.z - sortedByDistance[i].z;
+
+                int steps = 0;
+
+                int xI = (int)v.x;
+                int zI = (int)v.z;
+                while ((Mathf.Abs(xDistance) > 0 || Mathf.Abs(zDistance) > 0) && steps < 1000)
+                {
+                    int chance = Random.Range(0, 2);
+                    switch (chance)
+                    {
+                        case 0:
+                            if (Mathf.Abs(xDistance) > 0)
+                            {
+                                xI -= (int)Mathf.Sign(xDistance);
+                                xDistance -= (int)Mathf.Sign(xDistance);
+                            }
+                            break;
+                        case 1:
+                            if (Mathf.Abs(zDistance) > 0)
+                            {
+                                zI -= (int)Mathf.Sign(zDistance);
+                                zDistance -= (int)Mathf.Sign(zDistance);
+                            }
+                            break;
+                    }
+
+                    grid[xI, zI].type = Tile.TileType.Road;
+
+                    steps++;
+                }
+            }
+        }
     }
 
     Vector3 GetRandomPosition(float r = 0, float g = 0, float b = 0)
