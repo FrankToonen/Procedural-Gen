@@ -36,10 +36,13 @@ public class MeshGenerator : TextureGenerator
                 float yValue = tile.y < possibleYValues[2] ? possibleYValues[2] * noiseIntensity : tile.y * noiseIntensity;
                 vertexList.Add(new Vector3(x * (meshWidth / width), yValue, z * (meshHeight / height)));
 
+                float scale = meshWidth / width; 
+
                 if (tile.type == Tile.TileType.Grass && Random.value < treeChance)
                 {
                     GameObject newTree = Instantiate(Resources.Load<GameObject>("Prefabs/TreePrefab"), vertexList[vertexList.Count - 1], Quaternion.identity) as GameObject;
                     newTree.transform.parent = display.transform;
+                    newTree.transform.localScale *= scale;
                     instantiatedObjects.Add(newTree);
                 }
                 else if (tile.type == Tile.TileType.Village && Random.value < houseChance)
@@ -47,24 +50,28 @@ public class MeshGenerator : TextureGenerator
                     GameObject newHouse = Instantiate(Resources.Load<GameObject>("Prefabs/HousePrefab"), vertexList[vertexList.Count - 1], Quaternion.identity) as GameObject;
                     newHouse.transform.parent = display.transform;
                     newHouse.transform.localScale += Vector3.up * (.2f * Random.value);
+                    newHouse.transform.localScale *= scale;
                     instantiatedObjects.Add(newHouse);
                 }
                 else if (tile.type == Tile.TileType.VillageBorder)
                 {
                     GameObject newBorder = Instantiate(Resources.Load<GameObject>("Prefabs/BorderPrefab"), vertexList[vertexList.Count - 1], Quaternion.identity) as GameObject;
                     newBorder.transform.parent = display.transform;
+                    newBorder.transform.localScale *= scale;
                     instantiatedObjects.Add(newBorder);
                 }
                 else if (tile.type == Tile.TileType.Water && Random.value < boatChance)
                 {
                     GameObject newBoat = Instantiate(Resources.Load<GameObject>("Prefabs/BoatPrefab"), vertexList[vertexList.Count - 1], Quaternion.identity) as GameObject;
                     newBoat.transform.parent = display.transform;
+                    newBoat.transform.localScale *= scale;
                     instantiatedObjects.Add(newBoat);
                 }
                 else if (tile.type == Tile.TileType.Road)
                 {
-                    GameObject newBoat = Instantiate(Resources.Load<GameObject>("Prefabs/BoatPrefab"), vertexList[vertexList.Count - 1], Quaternion.identity) as GameObject;
+                    GameObject newBoat = Instantiate(Resources.Load<GameObject>("Prefabs/RoadPrefab"), vertexList[vertexList.Count - 1], Quaternion.identity) as GameObject;
                     newBoat.transform.parent = display.transform;
+                    newBoat.transform.localScale *= scale;
                     instantiatedObjects.Add(newBoat);
                 }
             }

@@ -14,6 +14,7 @@ public class MapGenerator : MonoBehaviour
 
     protected float noiseOffset;
     protected List<Vector3> villagePoints;
+    bool[,] villageConnections;
 
     protected virtual void Start()
     {
@@ -29,6 +30,8 @@ public class MapGenerator : MonoBehaviour
             GenerateGrid();
         }
     }
+
+
 
     protected void GenerateGrid()
     {
@@ -152,19 +155,24 @@ public class MapGenerator : MonoBehaviour
 
     void CreateRoads()
     {
-        foreach (Vector3 v in villagePoints)
+        villageConnections = new bool[villagePoints.Count, villagePoints.Count];
+
+        for (int i = 0; i < villagePoints.Count; i++)
         {
+            Vector3 v = villagePoints[i];
+
+            // Insertion sort
             List<Vector3> sortedByDistance = new List<Vector3>();
-            for (int i = 0; i < villagePoints.Count; i++)
+            for (int j = 0; j < villagePoints.Count; j++)
             {
-                Vector3 nV = villagePoints[i];
+                Vector3 nV = villagePoints[j];
                 bool added = false;
-                for (int j = 0; j < sortedByDistance.Count; j++)
+                for (int k = 0; k < sortedByDistance.Count; k++)
                 {
-                    Vector3 oV = sortedByDistance[j];
+                    Vector3 oV = sortedByDistance[k];
                     if (Vector3.Distance(nV, v) < Vector3.Distance(oV, v))
                     {
-                        sortedByDistance.Insert(j, nV);
+                        sortedByDistance.Insert(k, nV);
                         added = true;
                         break;
                     }
@@ -176,16 +184,38 @@ public class MapGenerator : MonoBehaviour
                 }
             }
 
-            for (int i = 0; i < 2; i++)
-            {         
-                float xDistance = v.x - sortedByDistance[i].x;
-                float zDistance = v.z - sortedByDistance[i].z;
+            // Create connections
+            for (int j = 1; j < 3; j++)
+            {        
+                int destinationIndex = villagePoints.IndexOf(sortedByDistance[j]);
+                villageConnections[i, destinationIndex] = true;
+                villageConnections[destinationIndex, i] = true;
+            }
+        }
 
-                int steps = 0;
+        CreatePaths();
+    }
 
-                int xI = (int)v.x;
-                int zI = (int)v.z;
-                while ((Mathf.Abs(xDistance) > 0 || Mathf.Abs(zDistance) > 0) && steps < 1000)
+    void CreatePaths()
+    {
+        for (int i = 0; i < villageConnections.GetLength(0); i++)
+        {
+            for (int j = 0; j < villageConnections.GetLength(1); j++)
+            {
+                if (j < i || !villageConnections[i, j])
+                {
+                    continue;
+                }
+
+                Vector3 s = villagePoints[i];
+                Vector3 d = villagePoints[j];
+
+                float xDistance = s.x - d.x;
+                float zDistance = s.z - d.z;
+
+                int xI = (int)s.x;
+                int zI = (int)s.z;
+                while (Mathf.Abs(xDistance) > 0 || Mathf.Abs(zDistance) > 0)
                 {
                     int chance = Random.Range(0, 2);
                     switch (chance)
@@ -207,8 +237,7 @@ public class MapGenerator : MonoBehaviour
                     }
 
                     grid[xI, zI].type = Tile.TileType.Road;
-
-                    steps++;
+                    grid[xI, zI].color = new Color(.5f, .4f, .1f);
                 }
             }
         }
