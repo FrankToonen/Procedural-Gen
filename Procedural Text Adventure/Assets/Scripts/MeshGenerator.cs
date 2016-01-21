@@ -4,20 +4,20 @@ using System.Collections.Generic;
 
 public class MeshGenerator : TextureGenerator
 {
-    public float meshWidth = 10, meshHeight = 10;
     public float treeChance = 0.1f;
     public float houseChance = 0.4f;
     public float boatChance = 0.01f;
 
-    List<Vector3> vertexList;
+    float meshWidth, meshHeight;
+    //List<Vector3> vertexList;
+    Vector3[] vertices;
     List<GameObject> instantiatedObjects;
 
-    protected override void VisualizeGrid()
+    public override void VisualizeGrid()
     {
         base.VisualizeGrid();
 
-        vertexList = new List<Vector3>();
-
+        // Destroy previously instantiated objects
         if (instantiatedObjects != null)
         {
             foreach (GameObject obj in instantiatedObjects)
@@ -27,6 +27,69 @@ public class MeshGenerator : TextureGenerator
         }
         instantiatedObjects = new List<GameObject>();
 
+        // Make 3d objects and fill vertexlist
+        for (int x = 0; x < width; x++)
+        {
+            for (int z = 0; z < height; z++)
+            {
+                Tile tile = grid[x, z];
+
+                //float yValue = tile.y < possibleYValues[2] ? possibleYValues[2] * noiseIntensity : tile.y * noiseIntensity;
+                //vertexList.Add(new Vector3(x * (meshWidth / width), yValue, z * (meshHeight / height)));
+
+                float scale = meshWidth / width; 
+                //Vector3 pos = vertexList[vertexList.Count - 1] + transform.position;
+                Vector3 pos = vertices[x * width + z] + transform.position;
+
+                // Determine object by tiletype and its corresponding chance
+                if (tile.type == Tile.TileType.Grass && Random.value < treeChance)
+                {
+                    GameObject newTree = Instantiate(Resources.Load<GameObject>("Prefabs/TreePrefab"), pos, Quaternion.identity) as GameObject;
+                    newTree.transform.parent = transform;
+                    newTree.transform.localScale *= scale;
+                    instantiatedObjects.Add(newTree);
+                }
+                else if (tile.type == Tile.TileType.Village && Random.value < houseChance)
+                {
+                    GameObject newHouse = Instantiate(Resources.Load<GameObject>("Prefabs/HousePrefab"), pos, Quaternion.identity) as GameObject;
+                    newHouse.transform.parent = transform;
+                    newHouse.transform.localScale += Vector3.up * (.2f * Random.value);
+                    newHouse.transform.localScale *= scale;
+                    instantiatedObjects.Add(newHouse);
+                }
+                else if (tile.type == Tile.TileType.VillageBorder)
+                {
+                    GameObject newBorder = Instantiate(Resources.Load<GameObject>("Prefabs/BorderPrefab"), pos, Quaternion.identity) as GameObject;
+                    newBorder.transform.parent = transform;
+                    newBorder.transform.localScale *= scale;
+                    instantiatedObjects.Add(newBorder);
+                }
+                else if (tile.type == Tile.TileType.Water && Random.value < boatChance)
+                {
+                    GameObject newBoat = Instantiate(Resources.Load<GameObject>("Prefabs/BoatPrefab"), pos, Quaternion.identity) as GameObject;
+                    newBoat.transform.parent = transform;
+                    newBoat.transform.localScale *= scale;
+                    instantiatedObjects.Add(newBoat);
+                }
+                else if (tile.type == Tile.TileType.Road)
+                {
+                    GameObject newBoat = Instantiate(Resources.Load<GameObject>("Prefabs/RoadPrefab"), pos, Quaternion.identity) as GameObject;
+                    newBoat.transform.parent = transform;
+                    newBoat.transform.localScale *= scale;
+                    instantiatedObjects.Add(newBoat);
+                }
+            }
+        }
+    }
+
+    public void CreateMesh(float _meshWidth, float _meshHeight)
+    {
+        meshWidth = _meshWidth;
+        meshHeight = _meshHeight;
+
+        vertices = new Vector3[width * height];
+        
+        //vertexList = new List<Vector3>();
         for (int x = 0; x < width; x++)
         {
             for (int z = 0; z < height; z++)
@@ -34,55 +97,13 @@ public class MeshGenerator : TextureGenerator
                 Tile tile = grid[x, z];
 
                 float yValue = tile.y < possibleYValues[2] ? possibleYValues[2] * noiseIntensity : tile.y * noiseIntensity;
-                vertexList.Add(new Vector3(x * (meshWidth / width), yValue, z * (meshHeight / height)));
-
-                float scale = meshWidth / width; 
-
-                if (tile.type == Tile.TileType.Grass && Random.value < treeChance)
-                {
-                    GameObject newTree = Instantiate(Resources.Load<GameObject>("Prefabs/TreePrefab"), vertexList[vertexList.Count - 1], Quaternion.identity) as GameObject;
-                    newTree.transform.parent = display.transform;
-                    newTree.transform.localScale *= scale;
-                    instantiatedObjects.Add(newTree);
-                }
-                else if (tile.type == Tile.TileType.Village && Random.value < houseChance)
-                {
-                    GameObject newHouse = Instantiate(Resources.Load<GameObject>("Prefabs/HousePrefab"), vertexList[vertexList.Count - 1], Quaternion.identity) as GameObject;
-                    newHouse.transform.parent = display.transform;
-                    newHouse.transform.localScale += Vector3.up * (.2f * Random.value);
-                    newHouse.transform.localScale *= scale;
-                    instantiatedObjects.Add(newHouse);
-                }
-                else if (tile.type == Tile.TileType.VillageBorder)
-                {
-                    GameObject newBorder = Instantiate(Resources.Load<GameObject>("Prefabs/BorderPrefab"), vertexList[vertexList.Count - 1], Quaternion.identity) as GameObject;
-                    newBorder.transform.parent = display.transform;
-                    newBorder.transform.localScale *= scale;
-                    instantiatedObjects.Add(newBorder);
-                }
-                else if (tile.type == Tile.TileType.Water && Random.value < boatChance)
-                {
-                    GameObject newBoat = Instantiate(Resources.Load<GameObject>("Prefabs/BoatPrefab"), vertexList[vertexList.Count - 1], Quaternion.identity) as GameObject;
-                    newBoat.transform.parent = display.transform;
-                    newBoat.transform.localScale *= scale;
-                    instantiatedObjects.Add(newBoat);
-                }
-                else if (tile.type == Tile.TileType.Road)
-                {
-                    GameObject newBoat = Instantiate(Resources.Load<GameObject>("Prefabs/RoadPrefab"), vertexList[vertexList.Count - 1], Quaternion.identity) as GameObject;
-                    newBoat.transform.parent = display.transform;
-                    newBoat.transform.localScale *= scale;
-                    instantiatedObjects.Add(newBoat);
-                }
+                Vector3 vertex = new Vector3(x * (meshWidth / width), yValue, z * (meshHeight / height));
+                //vertexList.Add(vertex);
+                vertices[x * width + z] = vertex;
             }
         }
 
-        CreateMesh();
-    }
-
-    void CreateMesh()
-    {
-        Vector3[] vertices = vertexList.ToArray();
+        //  Vector3[] vertices = vertexList.ToArray();
 
         JitterVertices(ref vertices);
 
@@ -101,8 +122,8 @@ public class MeshGenerator : TextureGenerator
         newMesh.RecalculateNormals();
         newMesh.RecalculateBounds();
 
-        display.GetComponent<MeshFilter>().mesh = newMesh;
-        display.GetComponent<MeshRenderer>().material.mainTexture = gridTexture;
+        GetComponent<MeshFilter>().mesh = newMesh;
+        //GetComponent<MeshRenderer>().material.mainTexture = gridTexture;
     }
 
     int[] FindTriangles(int vertices, Vector3[] v)

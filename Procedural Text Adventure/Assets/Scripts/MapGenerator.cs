@@ -16,28 +16,25 @@ public class MapGenerator : MonoBehaviour
     protected List<Vector3> villagePoints;
     bool[,] villageConnections;
 
-    protected virtual void Start()
+    protected virtual void Awake()
     {
         Random.seed = seed;
 
-        GenerateGrid();
+        //GenerateGrid();
     }
 
-    protected virtual void Update()
+    /*protected virtual void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
             GenerateGrid();
         }
-    }
+    }*/
 
-
-
-    protected void GenerateGrid()
+    public void GenerateGrid()
     {
         grid = new Tile[width, height];
         noiseOffset = Random.Range(0, 10000);
-
         for (int x = 0; x < width; x++)
         {
             for (int z = 0; z < height; z++)
@@ -50,15 +47,15 @@ public class MapGenerator : MonoBehaviour
             }
         }
 
-        for (int i = 0; i < interpolateTimes; i++)
+        /*for (int i = 0; i < interpolateTimes; i++)
         {
             InterpolateY();
-        }
+        }*/
 
         PopulateMap();
     }
 
-    Tuple GetColor(float x, float y, float z)
+    protected Tuple GetColor(float x, float y, float z)
     {
         float r = 0;
         float g = 0;
@@ -96,13 +93,18 @@ public class MapGenerator : MonoBehaviour
         return new Tuple(type, new Color(r, g, b));
     }
 
-    void InterpolateY()
+    public void InterpolateY()
     {
         for (int x = 0; x < width; x++)
         {
             for (int z = 0; z < height; z++)
             {
                 Tile tile = grid[x, z];
+                if (IsBoundary(x * width + z))
+                {
+                    continue;
+                }
+
                 float average = tile.y;
                 int amount = 1;
 
@@ -128,7 +130,11 @@ public class MapGenerator : MonoBehaviour
 
                 Tuple t = GetColor(tile.x, tile.y, tile.z);
                 tile.color = t.color;
-                tile.type = t.type;
+
+                if (tile.type != Tile.TileType.Village && tile.type != Tile.TileType.VillageBorder && tile.type != Tile.TileType.Road)
+                {
+                    tile.type = t.type;
+                }
             }
         }
     }
@@ -145,9 +151,11 @@ public class MapGenerator : MonoBehaviour
         int size = Random.Range(villageSize, villageSize * 2);
         villagePoints = new List<Vector3>();
 
+        Tile.TileType[] possibleTypes = new Tile.TileType[3] { Tile.TileType.Grass, Tile.TileType.Mountain, Tile.TileType.Sand };
+
         for (int i = 0; i < count; i++)
         {
-            villagePoints.Add(GetRandomPosition(0, 0.1f, 0));
+            villagePoints.Add(GetRandomPosition(possibleTypes));
         }
 
         grid = BleedGenerator.BleedPoints(grid, villagePoints, size, Color.gray);
@@ -243,18 +251,22 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
-    Vector3 GetRandomPosition(float r = 0, float g = 0, float b = 0)
+    Vector3 GetRandomPosition(Tile.TileType[] possibleTypes)
     {
-        Vector3 pos = new Vector3(Random.Range(0, width), 0, Random.Range(0, height));
-        Color c = grid[(int)pos.x, (int)pos.z].color;
-        if ((r > 0 && r > c.r) || (g > 0 && g > c.g) || (b > 0 && b > c.b))
+        Tile tile = grid[Random.Range(0, width), Random.Range(0, height)];
+        bool validTile = false;
+        foreach (Tile.TileType type in possibleTypes)
         {
-            return GetRandomPosition(r, g, b);
+            validTile |= tile.type == type;
+        }
+
+        if (!validTile)
+        {
+            return GetRandomPosition(possibleTypes);
         }
         else
         {
-            pos.y = grid[(int)pos.x, (int)pos.z].y;
-            return pos;
+            return new Vector3(tile.x, tile.y, tile.z);
         }
     }
 
